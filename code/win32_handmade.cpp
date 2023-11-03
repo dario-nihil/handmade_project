@@ -1,30 +1,11 @@
 #include <windows.h>
 
-// struct tagWNDCLASS {
-//   UINT      style;
-//   WNDPROC   lpfnWndProc;
-//   int       cbClsExtra;
-//   int       cbWndExtra;
-//   HINSTANCE hInstance;
-//   HICON     hIcon;
-//   HCURSOR   hCursor;
-//   HBRUSH    hbrBackground;
-//   LPCSTR    lpszMenuName;
-//   LPCSTR    lpszClassName;
-// };
+#define internal static 
+#define local_persist static 
+#define global_variable static 
 
-// typedef struct tagWNDCLASS {
-//   UINT      style;
-//   WNDPROC   lpfnWndProc;
-//   int       cbClsExtra;
-//   int       cbWndExtra;
-//   HINSTANCE hInstance;
-//   HICON     hIcon;
-//   HCURSOR   hCursor;
-//   HBRUSH    hbrBackground;
-//   LPCSTR    lpszMenuName;
-//   LPCSTR    lpszClassName;
-// } WNDCLASSA, *PWNDCLASS;
+// TODO this is global for now
+global_variable bool Running;
 
 LRESULT CALLBACK MainWindowCallBack(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam)
 {
@@ -37,10 +18,14 @@ LRESULT CALLBACK MainWindowCallBack(HWND Window, UINT Message, WPARAM WParam, LP
     } break;
     case WM_DESTROY:
     {
+      // TODO handle this as an error -  recreate window?
+      Running = false;
       OutputDebugStringA("WM_DESTROY\n");
     } break;
     case WM_CLOSE:
     {
+      // TODO handle this with a message to the user?
+      Running = false;
       OutputDebugStringA("WM_CLOSE\n");
     } break;
     case WM_ACTIVATEAPP:
@@ -55,7 +40,17 @@ LRESULT CALLBACK MainWindowCallBack(HWND Window, UINT Message, WPARAM WParam, LP
       int Y = Paint.rcPaint.top;
       int Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
       int Width = Paint.rcPaint.right - Paint.rcPaint.left;
-      PatBlt(DeviceContext, X, Y, Width, Height, WHITENESS);
+      local_persist DWORD Operation = WHITENESS;
+      PatBlt(DeviceContext, X, Y, Width, Height, Operation);
+      Operation = Operation == WHITENESS ? BLACKNESS : WHITENESS;
+      // if(Operation == WHITENESS)
+      // {
+      //   Operation = BLACKNESS;
+      // }
+      // else
+      // {
+      //   Operation = WHITENESS;
+      // }
 
       EndPaint(Window, &Paint);
     } break;
@@ -99,7 +94,8 @@ int CALLBACK WinMain(
 
         if(WindowHandle) 
         {
-          for(;;)
+          Running = true;
+          while(Running)
           {
             MSG Message;
             BOOL MessageResult = GetMessage(&Message, 0, 0, 0);
